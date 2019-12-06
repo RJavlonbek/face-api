@@ -1,3 +1,4 @@
+//require('@tensorflow/tfjs-node');
 const canvas=require('canvas');
 const faceapi=require('face-api.js');
 const fs = require("fs")  
@@ -41,20 +42,26 @@ function saveFile(fileName, buf) {
     fs.writeFileSync(path.resolve(baseDir, fileName), buf)
   }
 
-function prepareModels(){
+async function prepareModels(){
     console.log('preparing models');
     // load weights
-    faceDetectionNet.loadFromDisk('weights')
-    faceapi.nets.faceLandmark68Net.loadFromDisk('weights')
+    await faceDetectionNet.loadFromDisk('./weights')
+    await faceapi.nets.faceLandmark68Net.loadFromDisk('./weights')
+    await faceapi.nets.faceRecognitionNet.loadFromDisk('./weights')
+    await faceapi.nets.faceExpressionNet.loadFromDisk('./weights');
+    await faceapi.nets.ageGenderNet.loadFromDisk('./weights');
 }
 
 async function run() {
     // load the image
-    const img = await canvas.loadImage('images/angry.jpg')
+    const img = await canvas.loadImage('./images/iut-jizzax-private.jpg')
 
     // detect the faces with landmarks
     const results = await faceapi.detectAllFaces(img, faceDetectionOptions)
         .withFaceLandmarks()
+        .withFaceExpressions()
+        .withAgeAndGender()
+        .withFaceDescriptors();
 
     //console.log(results);
     // create a new canvas and draw the detection and landmarks
@@ -62,10 +69,156 @@ async function run() {
     faceapi.draw.drawDetections(out, results.map(res => res.detection));
     faceapi.draw.drawFaceLandmarks(out, results.map(res => res.landmarks), { drawLines: true, color: 'red' });
 
+    const minProbability = 0.05
+    faceapi.draw.drawFaceExpressions(out, results, minProbability)
+
+    results.forEach(result => {
+        const { age, gender, genderProbability } = result
+        new faceapi.draw.DrawTextField(
+            [
+                `${faceapi.round(age, 0)} years`,
+                `${gender} (${faceapi.round(genderProbability)})`
+            ],
+            result.detection.box.topLeft
+        ).draw(out);
+    })
+
     // save the new canvas as image
     saveFile('faceLandmarkDetection.jpg', out.toBuffer('image/jpeg'));
     console.log('done, saved results to out/faceLandmarkDetection.jpg');
     return results;
 }
 
-module.exports={run,prepareModels};
+async function recognize(){
+    const REFERENCE_IMAGE='./images/iut-jizzax-private.jpg';
+    const QUERY_IMAGE='./images/students/u1710005.jpg';
+
+    const referenceImage = await canvas.loadImage(REFERENCE_IMAGE);
+    const queryImage = await canvas.loadImage(QUERY_IMAGE);
+
+    const resultsQuery = await faceapi.detectSingleFace(queryImage, faceDetectionOptions)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+    const resultsRef= await faceapi.detectAllFaces(referenceImage, faceDetectionOptions)
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+    const labeledDescriptors=[
+        new faceapi.LabeledFaceDescriptors('javlon',[resultsQuery.descriptor])
+    ]
+
+    const faceMatcher=new faceapi.FaceMatcher(resultsRef);
+
+    const labels = faceMatcher.labeledDescriptors.map(ld => ld.label)
+    const refDrawBoxes = resultsRef.map(res => res.detection.box).map((box, i) => {
+        return new faceapi.draw.DrawBox(box, { label: labels[i] });
+    });
+    const outRef = faceapi.createCanvasFromMedia(referenceImage)
+    refDrawBoxes.forEach(drawBox => drawBox.draw(outRef))
+
+    saveFile('referenceImage.jpg', outRef.toBuffer('image/jpeg'))
+
+    const bestMatch = faceMatcher.findBestMatch(resultsQuery.descriptor)
+    const queryDrawBoxes = new faceapi.draw.DrawBox(resultsQuery.detection.box, { label: bestMatch.toString() });
+    const outQuery = faceapi.createCanvasFromMedia(queryImage)
+    queryDrawBoxes.draw(outQuery);
+    saveFile('queryImage.jpg', outQuery.toBuffer('image/jpeg'))
+    console.log('done, saved results to out/queryImage.jpg')
+
+    //const bestMatch=faceMatcher.findBestMatch(resultsQuery.descriptor);
+    return resultsQuery.descriptor;
+}
+
+async function recognizeById(studentId){
+    if(studentId){
+        const REFERENCE_IMAGE='./images/iut-jizzax-private.jpg';
+        const QUERY_DESCRIPTOR='./images/students/'+studentId+'.json';
+
+        const referenceImage = await canvas.loadImage(REFERENCE_IMAGE);
+
+        // const resultsQuery = await faceapi.detectSingleFace(queryImage, faceDetectionOptions)
+        //     .withFaceLandmarks()
+        //     .withFaceDescriptor();
+        const queryDescriptor=JSON.parse(fs.readFileSync(path.resolve(__dirname, QUERY_DESCRIPTOR)));
+
+        const resultsRef= await faceapi.detectAllFaces(referenceImage, faceDetectionOptions)
+            .withFaceLandmarks()
+            .withFaceDescriptors();
+
+        // const labeledDescriptors=[
+        //     new faceapi.LabeledFaceDescriptors('javlon',[queryDescriptor])
+        // ]
+
+        const faceMatcher=new faceapi.FaceMatcher(resultsRef);
+
+        
+
+        const labels = faceMatcher.labeledDescriptors.map(ld => {
+            // if(ld.label==bestMatch._label){
+            //     return 'Javlon';
+            // }else{
+                return ld.label;
+            //}
+        });
+
+        const refDrawBoxes = resultsRef.map(res => res.detection.box).map((box, i) => {
+            return new faceapi.draw.DrawBox(box, { label: labels[i] });
+        });
+        const outRef = faceapi.createCanvasFromMedia(referenceImage)
+        refDrawBoxes.forEach(drawBox => drawBox.draw(outRef))
+
+        const bestMatch = faceMatcher.findBestMatch(queryDescriptor);
+
+        saveFile('referenceImage.jpg', outRef.toBuffer('image/jpeg'));
+
+        
+
+        //const bestMatch=faceMatcher.findBestMatch(resultsQuery.descriptor);
+        return bestMatch;
+    }
+}
+
+async function storeFaceDescriptors(){
+    const dirname='./images/students';
+
+    const img=await canvas.loadImage(path.resolve(__dirname,dirname,'u1710005.jpg'));
+
+    const result=await faceapi.detectSingleFace(img, faceDetectionOptions).withFaceLandmarks().withFaceDescriptor();
+    fs.writeFileSync( path.resolve(__dirname,dirname,"u1710005.json"), JSON.stringify(result.descriptor), "utf8");
+}
+
+function displayModels(){
+    return faceapi.nets;
+}
+
+// detect and draw faces to a picture which was sent by post request
+async function detectFaces(photo){
+    if(photo){
+        console.log('detecting faces...');
+        var img = new Image; // Create a new Image
+        img.src = photo.data;
+
+        console.log(img);
+        const results = await faceapi.detectAllFaces(img, faceDetectionOptions)
+            .withFaceLandmarks()
+            .withFaceExpressions()
+            .withAgeAndGender()
+            .withFaceDescriptors();
+
+        const out = faceapi.createCanvasFromMedia(img);
+        faceapi.draw.drawDetections(out, results.map(res => res.detection));
+        faceapi.draw.drawFaceLandmarks(out, results.map(res => res.landmarks), { drawLines: true, color: 'red' });
+        return out.toBuffer('image/jpeg');
+    }
+}
+
+module.exports={
+    run,
+    prepareModels,
+    recognize,
+    recognizeById,
+    displayModels,
+    storeFaceDescriptors,
+    detectFaces
+};
