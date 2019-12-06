@@ -137,10 +137,8 @@ async function recognizeById(studentId){
 
         const referenceImage = await canvas.loadImage(REFERENCE_IMAGE);
 
-        // const resultsQuery = await faceapi.detectSingleFace(queryImage, faceDetectionOptions)
-        //     .withFaceLandmarks()
-        //     .withFaceDescriptor();
-        const queryDescriptor=JSON.parse(fs.readFileSync(path.resolve(__dirname, QUERY_DESCRIPTOR)));
+        const queryDescriptorJSON= JSON.parse(fs.readFileSync(path.resolve(__dirname, QUERY_DESCRIPTOR)));
+        const queryDescriptor=new Float32Array(Object.values(queryDescriptorJSON));
 
         const resultsRef= await faceapi.detectAllFaces(referenceImage, faceDetectionOptions)
             .withFaceLandmarks()
@@ -150,16 +148,17 @@ async function recognizeById(studentId){
         //     new faceapi.LabeledFaceDescriptors('javlon',[queryDescriptor])
         // ]
 
+
         const faceMatcher=new faceapi.FaceMatcher(resultsRef);
 
-        
+        const bestMatch = faceMatcher.findBestMatch(queryDescriptor);
 
         const labels = faceMatcher.labeledDescriptors.map(ld => {
-            // if(ld.label==bestMatch._label){
-            //     return 'Javlon';
-            // }else{
+            if(ld.label==bestMatch._label){
+                return 'Javlon';
+            }else{
                 return ld.label;
-            //}
+            }
         });
 
         const refDrawBoxes = resultsRef.map(res => res.detection.box).map((box, i) => {
@@ -168,7 +167,7 @@ async function recognizeById(studentId){
         const outRef = faceapi.createCanvasFromMedia(referenceImage)
         refDrawBoxes.forEach(drawBox => drawBox.draw(outRef))
 
-        const bestMatch = faceMatcher.findBestMatch(queryDescriptor);
+        
 
         saveFile('referenceImage.jpg', outRef.toBuffer('image/jpeg'));
 
@@ -179,13 +178,33 @@ async function recognizeById(studentId){
     }
 }
 
-async function storeFaceDescriptors(){
-    const dirname='./images/students';
+function storeFaceDescriptors(){
+    const dirname=path.resolve(__dirname,'./images/students');
+    const descriptorsDir=path.resolve(__dirname, './images/descriptors');
 
-    const img=await canvas.loadImage(path.resolve(__dirname,dirname,'u1710005.jpg'));
+    fs.readdir(dirname, (err, studentImages)=>{
+        studentImages.forEach((studentImage)=>{
+            let studentId=studentImage.split('.')[0];
+            fs.stat(path.resolve(descriptorsDir, studentId+'.json'), (err,exists)=>{
+                if(err!==null){
+                    console.log(studentId+' image found, and descriptor file not found, storing...');
+                    storeFaceDescriptor(path.resolve(dirname, studentImage), path.resolve(descriptorsDir, studentId+'.json')).then(()=>{
+                        console.log('stored...');
+                    });
+                }else if(err==null){
+                    console.log(studentId+' descriptor found');
+                }else{
+                    console.log(err);
+                }
+            });
+        });
+    });
 
-    const result=await faceapi.detectSingleFace(img, faceDetectionOptions).withFaceLandmarks().withFaceDescriptor();
-    fs.writeFileSync( path.resolve(__dirname,dirname,"u1710005.json"), JSON.stringify(result.descriptor), "utf8");
+    async function storeFaceDescriptor(imageDir, jsonDir){
+        const img=await canvas.loadImage(imageDir);
+        const result=await faceapi.detectSingleFace(img, faceDetectionOptions).withFaceLandmarks().withFaceDescriptor();
+        fs.writeFileSync(jsonDir, JSON.stringify(result.descriptor), "utf8");
+    }
 }
 
 function displayModels(){
@@ -213,6 +232,52 @@ async function detectFaces(photo){
     }
 }
 
+async function recognizeFaces(photo, studentIds){
+    console.log('recognizing faces...');
+    let results=[];
+
+    // getting queried photo informations
+    let img = new Image;
+    img.src=photo.data;
+    const queryResults = await faceapi.detectAllFaces(img, faceDetectionOptions)
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+    // getting referenced informations (photo informations of given students)
+    let labeledRefDescriptors=[];
+    for(let i=0; i<studentIds.length; i++){
+        let studentId=studentIds[i];
+        let REF_DESCRIPTOR_FILE='./images/descriptors/'+studentId+'.json';
+        let refDescriptorJSON=JSON.parse(fs.readFileSync(path.resolve(__dirname, REF_DESCRIPTOR_FILE)));
+        let refDescriptor= new Float32Array(Object.values(refDescriptorJSON));
+
+        labeledRefDescriptors.push(new faceapi.LabeledFaceDescriptors(studentId, [refDescriptor]));
+    }
+
+    // queried image canvas
+    let queryCanvas=faceapi.createCanvasFromMedia(img);
+
+    // create faceMatcher with referenced informations
+    const faceMatcher= new faceapi.FaceMatcher(labeledRefDescriptors);
+
+    // matching faces found in queried picture with faceMatcher
+    queryResults.map((queriedFaceResult)=>{
+        // find best match
+        let bestMatch=faceMatcher.findBestMatch(queriedFaceResult.descriptor);
+        results.push(bestMatch);
+        // start drawing box
+        return new faceapi.draw.DrawBox(queriedFaceResult.detection.box, {label: bestMatch.toString()});
+    }).forEach((drawBox)=>drawBox.draw(queryCanvas));
+
+    // save boxed query image
+    saveFile('boxedQueryImage.jpg', queryCanvas.toBuffer('image/jpeg'));
+    console.log('boxedQueryImage.jpg file saved...'); 
+
+    return {
+        results
+    };
+}
+
 module.exports={
     run,
     prepareModels,
@@ -220,5 +285,6 @@ module.exports={
     recognizeById,
     displayModels,
     storeFaceDescriptors,
-    detectFaces
+    detectFaces,
+    recognizeFaces
 };

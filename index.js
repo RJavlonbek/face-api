@@ -6,9 +6,7 @@ const faceApi=require('./app.js');
 
 faceApi.prepareModels().then(()=>{
 	console.log('prepared');
-	// faceApi.storeFaceDescriptors().then(()=>{
-	// 	console.log('face descriptors stored');
-	// })
+	faceApi.storeFaceDescriptors();
 });
 
 app.use(fileUpload());
@@ -49,9 +47,35 @@ app.post('/detect-faces',(req,res,next)=>{
 		console.log('error occured while detecting faces: '+err);
 	}).then((results)=>{
 		console.log('done...');
-		res.set('Content-Type','text/plain');
+		res.set('Content-Type','image/jpeg');
 		res.send(results);
 	});
+});
+
+app.post('/recognize-faces',(req,res,next)=>{
+	var photo=req.files.photo;
+	var studentIds=['u1710005','u1710033'];
+	//var studentIds=req.body.
+	if(photo){
+		faceApi.recognizeFaces(photo, studentIds).catch((err)=>{
+			console.log('error occured while recognizing faces: '+err);
+			res.json({
+				result:'error',
+				message:'error occured while recognizing faces: '+err
+			});
+		}).then((results)=>{
+			console.log('done');
+			res.json({
+				results,
+				result:'success'
+			});
+		});
+	}else{
+		res.json({
+			result:'error',
+			message:'no photo provided'
+		});
+	}
 });
 
 /****      routes end     ***********/
