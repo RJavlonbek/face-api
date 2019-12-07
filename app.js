@@ -270,11 +270,13 @@ async function recognizeFaces(photo, studentIds){
     }).forEach((drawBox)=>drawBox.draw(queryCanvas));
 
     // save boxed query image
-    saveFile('boxedQueryImage.jpg', queryCanvas.toBuffer('image/jpeg'));
+    const imageBuffer=queryCanvas.toBuffer('image/jpeg');
+    saveFile('boxedQueryImage.jpg', imageBuffer);
     console.log('boxedQueryImage.jpg file saved...'); 
 
     return {
-        results
+        results,
+        boxedImageBuffer:imageBuffer
     };
 }
 
