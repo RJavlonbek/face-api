@@ -81,7 +81,7 @@ async function run() {
             ],
             result.detection.box.topLeft
         ).draw(out);
-    })
+    });
 
     // save the new canvas as image
     saveFile('faceLandmarkDetection.jpg', out.toBuffer('image/jpeg'));
@@ -272,7 +272,7 @@ async function recognizeFaces(photo, studentIds){
     // save boxed query image
     const imageBuffer=queryCanvas.toBuffer('image/jpeg');
     saveFile('boxedQueryImage.jpg', imageBuffer);
-    console.log('boxedQueryImage.jpg file saved...'); 
+    console.log('boxedQueryImage.jpg file saved...');
 
     return {
         results,
