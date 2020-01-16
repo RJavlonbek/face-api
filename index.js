@@ -54,9 +54,10 @@ app.post('/detect-faces',(req,res,next)=>{
 });
 
 app.post('/recognize-faces',(req,res,next)=>{
+	console.log('recognize-faces requested');
 	req.setTimeout(600000);
 	var photo=req.files.photo;
-	var studentIds=['u1710005','u1710020','u1710032','u1710033','u1710037','u1710042','u1710046','u1710048','u1710056','u1710100','u1710113','u1710135','u1710146','u1710039'];
+	var studentIds=['u1710005','u1710020','u1710032','u1710033','u1710037','u1710042','u1710046','u1710048','u1710056','u1710100','u1710113','u1710135','u1710146'];
 	//var studentIds=req.body.
 	if(photo){
 		faceApi.recognizeFaces(photo, studentIds).catch((err)=>{
