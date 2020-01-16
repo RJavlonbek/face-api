@@ -243,6 +243,8 @@ async function recognizeFaces(photo, studentIds){
         .withFaceLandmarks()
         .withFaceDescriptors();
 
+    console.log('photo is analyzed...');
+
     // getting referenced informations (photo informations of given students)
     let labeledRefDescriptors=[];
     for(let i=0; i<studentIds.length; i++){
@@ -252,6 +254,8 @@ async function recognizeFaces(photo, studentIds){
         let refDescriptor= new Float32Array(Object.values(refDescriptorJSON));
 
         labeledRefDescriptors.push(new faceapi.LabeledFaceDescriptors(studentId, [refDescriptor]));
+
+        console.log(studentId + ' descriptor found');
     }
 
     // queried image canvas
@@ -261,6 +265,7 @@ async function recognizeFaces(photo, studentIds){
     const faceMatcher= new faceapi.FaceMatcher(labeledRefDescriptors);
 
     // matching faces found in queried picture with faceMatcher
+    console.log('finding matches...')
     queryResults.map((queriedFaceResult)=>{
         // find best match
         let bestMatch=faceMatcher.findBestMatch(queriedFaceResult.descriptor);
