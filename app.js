@@ -271,8 +271,8 @@ async function recognizeFaces(photo, studentIds){
 
     // save boxed query image
     const imageBuffer=queryCanvas.toBuffer('image/jpeg');
-    saveFile('boxedQueryImage.jpg', imageBuffer);
-    console.log('boxedQueryImage.jpg file saved...');
+    //saveFile('boxedQueryImage.jpg', imageBuffer);
+    //console.log('boxedQueryImage.jpg file saved...');
 
     return {
         results,
