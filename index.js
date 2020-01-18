@@ -1,4 +1,4 @@
-//require('@tensorflow/tfjs-node');
+require('@tensorflow/tfjs-node-gpu');
 var express=require('express');
 var fileUpload=require('express-fileupload');
 var app=express();
