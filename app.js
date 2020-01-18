@@ -1,4 +1,4 @@
-
+require('@tensorflow/tfjs-node');
 const canvas=require('canvas');
 const faceapi=require('face-api.js');
 const fs = require("fs")  
@@ -45,7 +45,7 @@ function saveFile(fileName, buf) {
 async function prepareModels(){
     console.log('preparing models');
     // load weights
-    await faceDetectionNet.loadFromDisk('./weights')
+    await faceapi.nets.tinyFaceDetector.loadFromDisk('./weights')
     await faceapi.nets.faceLandmark68Net.loadFromDisk('./weights')
     await faceapi.nets.faceRecognitionNet.loadFromDisk('./weights')
     await faceapi.nets.faceExpressionNet.loadFromDisk('./weights');
@@ -239,7 +239,7 @@ async function recognizeFaces(photo, studentIds){
     // getting queried photo informations
     let img = new Image;
     img.src=photo.data;
-    const queryResults = await faceapi.detectAllFaces(img, faceDetectionOptions)
+    const queryResults = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
         .withFaceDescriptors();
 
