@@ -13,7 +13,7 @@ const faceDetectionNet = faceapi.nets.ssdMobilenetv1
 const minConfidence = 0.5
 
 // TinyFaceDetectorOptions
-const inputSize = 416  
+const inputSize = 408  
 const scoreThreshold = 0.5
 
 // MtcnnOptions
@@ -40,13 +40,12 @@ function saveFile(fileName, buf) {
     // this is ok for prototyping but using sync methods
     // is bad practice in NodeJS
     fs.writeFileSync(path.resolve(baseDir, fileName), buf)
-}
+  }
 
 async function prepareModels(){
     console.log('preparing models');
     // load weights
-    await faceapi.nets.ssdMobilenetv1.loadFromDisk('./weights');
-    //await faceapi.nets.tinyFaceDetector.loadFromDisk('./weights')
+    await faceDetectionNet.loadFromDisk('./weights')
     await faceapi.nets.faceLandmark68Net.loadFromDisk('./weights')
     await faceapi.nets.faceRecognitionNet.loadFromDisk('./weights')
     await faceapi.nets.faceExpressionNet.loadFromDisk('./weights');
@@ -240,8 +239,7 @@ async function recognizeFaces(photo, studentIds){
     // getting queried photo informations
     let img = new Image;
     img.src=photo.data;
-    console.log(img);
-    const queryResults = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold }))
+    const queryResults = await faceapi.detectAllFaces(img, faceDetectionOptions)
         .withFaceLandmarks()
         .withFaceDescriptors();
 
@@ -267,7 +265,7 @@ async function recognizeFaces(photo, studentIds){
     const faceMatcher= new faceapi.FaceMatcher(labeledRefDescriptors);
 
     // matching faces found in queried picture with faceMatcher
-    console.log('finding matches...');
+    console.log('finding matches...')
     queryResults.map((queriedFaceResult)=>{
         // find best match
         let bestMatch=faceMatcher.findBestMatch(queriedFaceResult.descriptor);
@@ -281,11 +279,8 @@ async function recognizeFaces(photo, studentIds){
     //saveFile('boxedQueryImage.jpg', imageBuffer);
     //console.log('boxedQueryImage.jpg file saved...');
 
-    //return imageBuffer;
-
     return {
         results,
-        queryResults,
         boxedImageBuffer:imageBuffer
     };
 }
