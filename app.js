@@ -13,7 +13,7 @@ const faceDetectionNet = faceapi.nets.tinyFaceDetector
 const minConfidence = 0.5
 
 // TinyFaceDetectorOptions
-const inputSize = 408  
+const inputSize = 416  
 const scoreThreshold = 0.5
 
 // MtcnnOptions
@@ -219,7 +219,7 @@ async function detectFaces(photo){
         img.src = photo.data;
 
         console.log(img);
-        const results = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions())
+        const results = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold }))
             .withFaceLandmarks()
             .withFaceExpressions()
             .withAgeAndGender()
