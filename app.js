@@ -40,7 +40,7 @@ function saveFile(fileName, buf) {
     // this is ok for prototyping but using sync methods
     // is bad practice in NodeJS
     fs.writeFileSync(path.resolve(baseDir, fileName), buf)
-  }
+}
 
 async function prepareModels(){
     console.log('preparing models');
@@ -219,7 +219,7 @@ async function detectFaces(photo){
         img.src = photo.data;
 
         console.log(img);
-        const results = await faceapi.detectAllFaces(img, faceDetectionOptions)
+        const results = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
             .withFaceExpressions()
             .withAgeAndGender()
@@ -279,10 +279,12 @@ async function recognizeFaces(photo, studentIds){
     //saveFile('boxedQueryImage.jpg', imageBuffer);
     //console.log('boxedQueryImage.jpg file saved...');
 
-    return {
-        results,
-        boxedImageBuffer:imageBuffer
-    };
+    return imageBuffer;
+
+    // return {
+    //     results,
+    //     boxedImageBuffer:imageBuffer
+    // };
 }
 
 module.exports={
