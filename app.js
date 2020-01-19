@@ -10,7 +10,7 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 const faceDetectionNet = faceapi.nets.ssdMobilenetv1
 
 // SsdMobilenetv1Options
-const minConfidence = 0.5
+const minConfidence = 0.3;
 
 // TinyFaceDetectorOptions
 const inputSize = 408  
@@ -254,9 +254,9 @@ async function recognizeFaces(photo, studentIds){
         let refDescriptor= new Float32Array(Object.values(refDescriptorJSON));
 
         labeledRefDescriptors.push(new faceapi.LabeledFaceDescriptors(studentId, [refDescriptor]));
-
-        console.log(studentId + ' descriptor found');
     }
+
+    console.log('student descriptors found...');
 
     // queried image canvas
     let queryCanvas=faceapi.createCanvasFromMedia(img);
@@ -279,10 +279,12 @@ async function recognizeFaces(photo, studentIds){
     //saveFile('boxedQueryImage.jpg', imageBuffer);
     //console.log('boxedQueryImage.jpg file saved...');
 
-    return {
-        results,
-        boxedImageBuffer:imageBuffer
-    };
+    return imageBuffer;
+
+    // return {
+    //     results,
+    //     boxedImageBuffer:imageBuffer
+    // };
 }
 
 module.exports={
