@@ -265,7 +265,7 @@ async function recognizeFaces(photo, studentIds){
     const faceMatcher= new faceapi.FaceMatcher(labeledRefDescriptors);
 
     // matching faces found in queried picture with faceMatcher
-    console.log('finding matches...')
+    console.log('finding matches...');
     queryResults.map((queriedFaceResult)=>{
         // find best match
         let bestMatch=faceMatcher.findBestMatch(queriedFaceResult.descriptor);
@@ -283,6 +283,7 @@ async function recognizeFaces(photo, studentIds){
 
     return {
         results,
+        queryResults,
         boxedImageBuffer:imageBuffer
     };
 }
