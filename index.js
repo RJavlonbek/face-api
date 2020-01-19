@@ -1,4 +1,4 @@
-//require('@tensorflow/tfjs-node')
+require('@tensorflow/tfjs-node')
 var express=require('express');
 var fileUpload=require('express-fileupload');
 var app=express();
@@ -90,6 +90,6 @@ app.use((req,res,next)=>{
 
 
 
-const port=process.env.PORT||3001;
+const port=process.env.PORT||3002;
 app.listen(port);
 console.log('now, server is working on ',port);

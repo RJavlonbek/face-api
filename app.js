@@ -7,13 +7,13 @@ const path = require("path")
 const { Canvas, Image, ImageData } = canvas  
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 
-const faceDetectionNet = faceapi.nets.tinyFaceDetector
+const faceDetectionNet = faceapi.nets.ssdMobilenetv1
 
 // SsdMobilenetv1Options
 const minConfidence = 0.5
 
 // TinyFaceDetectorOptions
-const inputSize = 416  
+const inputSize = 408  
 const scoreThreshold = 0.5
 
 // MtcnnOptions
@@ -219,7 +219,7 @@ async function detectFaces(photo){
         img.src = photo.data;
 
         console.log(img);
-        const results = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold }))
+        const results = await faceapi.detectAllFaces(img, faceDetectionOptions)
             .withFaceLandmarks()
             .withFaceExpressions()
             .withAgeAndGender()
