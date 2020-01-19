@@ -279,12 +279,12 @@ async function recognizeFaces(photo, studentIds){
     //saveFile('boxedQueryImage.jpg', imageBuffer);
     //console.log('boxedQueryImage.jpg file saved...');
 
-    return imageBuffer;
+    //return imageBuffer;
 
-    // return {
-    //     results,
-    //     boxedImageBuffer:imageBuffer
-    // };
+    return {
+        results,
+        boxedImageBuffer:imageBuffer
+    };
 }
 
 module.exports={

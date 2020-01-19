@@ -86,14 +86,14 @@ app.post('/recognize-faces',(req,res,next)=>{
 			console.log('recognizing faces done, image was sent...');
 
 			// sending boxed image
-			res.set('Content-Type','image/jpeg');
-			res.send(results);
+			// res.set('Content-Type','image/jpeg');
+			// res.send(results);
 
 			// sending json
-			// res.json({
-			// 	...results,
-			// 	result:'success'
-			// });
+			res.json({
+				...results,
+				result:'success'
+			});
 		});
 	});
 
