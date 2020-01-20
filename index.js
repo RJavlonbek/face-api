@@ -89,7 +89,7 @@ app.post('/recognize-faces',(req,res,next)=>{
 			console.log('recognizing faces done, image was sent...');
 
 			// sending request to iut-attendance API in order to mark found students attended
-			attendance(result.facesData);
+			attendance({data:result.facesData, lectureId});
 
 			// sending boxed image
 			res.set('Content-Type','image/jpeg');
@@ -105,9 +105,7 @@ app.post('/recognize-faces',(req,res,next)=>{
 
 	function attendance(data){
 		console.log('requesting to iut-attendance...');
-		data = JSON.stringify({
-			data
-		});
+		data = JSON.stringify(data);
 		const options = {
 		  	hostname: 'iut-attendance.herokuapp.com',
 		  	port: 443,
