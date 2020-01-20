@@ -3,6 +3,7 @@ var express=require('express');
 var fileUpload=require('express-fileupload');
 const path=require('path');
 const fs=require('fs');
+const https=require('https');
 var app=express();
 
 const faceApi=require('./app.js');
@@ -60,13 +61,14 @@ app.post('/recognize-faces',(req,res,next)=>{
 	console.log('recognize-faces requested');
 	req.setTimeout(600000);
 	var photo=req.files.photo;
+	const {lectureId}=req.body || {};
 	var studentIds=['u1710005','u1710020','u1710032','u1710033','u1710037','u1710042','u1710046','u1710048','u1710056','u1710100','u1710113','u1710135','u1710146'];
 	const DESCRIPTORS_DIR=path.join(__dirname, './images/descriptors');
 
-	if(!photo){ 
-		res.json({
+	if(!(photo && lectureId)){ 
+		return res.json({
 			result:'error',
-			message:'no photo provided'
+			message:'lack of data'
 		});
 	}
 
@@ -83,12 +85,15 @@ app.post('/recognize-faces',(req,res,next)=>{
 				result:'error',
 				message:'error occured while recognizing faces: '+err
 			});
-		}).then((results)=>{
+		}).then((result)=>{
 			console.log('recognizing faces done, image was sent...');
+
+			// sending request to iut-attendance API in order to mark found students attended
+			attendance(result.facesData);
 
 			// sending boxed image
 			res.set('Content-Type','image/jpeg');
-			res.send(results);
+			res.send(result.boxedImageBuffer);
 
 			// sending json
 			// res.json({
@@ -97,6 +102,38 @@ app.post('/recognize-faces',(req,res,next)=>{
 			// });
 		});
 	});
+
+	function attendance(data){
+		console.log('requesting to iut-attendance...');
+		data = JSON.stringify({
+			data
+		});
+		const options = {
+		  	hostname: 'iut-attendance.herokuapp.com',
+		  	port: 443,
+		  	path: '/api/lecture/attendance',
+		  	method: 'POST',
+		  	headers: {
+		    	'Content-Type': 'application/json',
+		    	'Content-Length': data.length
+		  	}
+		}
+		const req = https.request(options, res => {
+		  	console.log(`statusCode: ${res.statusCode}`)
+
+		  	res.on('data', d => {
+		  		console.log('request to iut-attendance finished...');
+		    	process.stdout.write(d)
+		  	});
+		})
+
+		req.on('error', error => {
+		  	console.error(error)
+		})
+
+		req.write(data)
+		req.end();
+	}
 });
 
 /****      routes end     ***********/
