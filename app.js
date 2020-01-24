@@ -227,7 +227,22 @@ async function detectFaces(photo){
 
         const out = faceapi.createCanvasFromMedia(img);
         faceapi.draw.drawDetections(out, results.map(res => res.detection));
-        faceapi.draw.drawFaceLandmarks(out, results.map(res => res.landmarks), { drawLines: true, color: 'red' });
+        //faceapi.draw.drawFaceLandmarks(out, results.map(res => res.landmarks), { drawLines: true, color: 'red' });
+
+        const minProbability = 0.05
+        faceapi.draw.drawFaceExpressions(out, results, minProbability)
+
+        results.forEach(result => {
+            const { age, gender, genderProbability } = result
+            new faceapi.draw.DrawTextField(
+                [
+                    `${Math.round(age, 0)} years`,
+                    `${gender} (${Math.round(genderProbability)})`
+                ],
+                result.detection.box.topLeft
+            ).draw(out);
+        });
+
         return out.toBuffer('image/jpeg');
     }
 }

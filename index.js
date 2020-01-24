@@ -14,6 +14,7 @@ faceApi.prepareModels().then(()=>{
 });
 
 app.use(fileUpload());
+app.use(express.static('images'));
 
 app.get('/',(req,res,next)=>{
 	const routeList=
