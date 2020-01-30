@@ -284,9 +284,12 @@ async function recognizeFaces(photo, studentIds){
     queryResults.map((queriedFaceResult)=>{
         // find best match
         let bestMatch=faceMatcher.findBestMatch(queriedFaceResult.descriptor);
-        results.push(bestMatch);
-        // start drawing box
-        return new faceapi.draw.DrawBox(queriedFaceResult.detection.box, {label: bestMatch.toString()});
+        console.log(bestMatch);
+        if(bestMatch.toString() != 'unknown'){
+            results.push(bestMatch);
+            // start drawing box
+            return new faceapi.draw.DrawBox(queriedFaceResult.detection.box, {label: bestMatch.toString()});
+        }
     }).forEach((drawBox)=>drawBox.draw(queryCanvas));
 
     // save boxed query image
