@@ -153,6 +153,29 @@ app.post('/attendance',(req,res,next)=>{
 			});
 		}
 
+		// getting all students that were supposed to attend the lecture
+		let allStudents = await db.collection('students').find({
+			_id:{$in: lecture.value.students}
+		}).toArray();
+
+		// preparing students array; adding attended field
+		students = allStudents.map((s, i)=>{
+			var attended=false;
+			students.map((st, i)=>{
+				if(st.studentId == s.studentId){
+					attended=true;
+				}
+			});
+
+			return {
+				_id: s._id,
+				firstname: s.firstname,
+				lastname: s.lastname,
+				studentId: s.studentId,
+				attended
+			}
+		});
+
 		// sending necessary data
 		res.json({
 			status: 'success',
