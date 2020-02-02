@@ -43,6 +43,7 @@ app.get('/',(req,res,next)=>{
 
 app.post('/attendance',(req,res,next)=>{
 	console.log('attendance requested');
+	console.log(req.body.lectureId);
 	req.setTimeout(600000);
 	var photo=req.files.photo;
 	const {lectureId}=req.body || {};
