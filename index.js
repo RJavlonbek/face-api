@@ -46,7 +46,7 @@ app.post('/attendance',(req,res,next)=>{
 	console.log(req.body.lectureId);
 	req.setTimeout(600000);
 	var photo=req.files.photo;
-	const {lectureId}=req.body || {};
+	var {lectureId}=req.body || {};
 	var studentIds=['u1710005','u1710020','u1710032','u1710033','u1710037','u1710042','u1710046','u1710048','u1710056','u1710100','u1710113','u1710135','u1710146'];
 	const DESCRIPTORS_DIR=path.join(__dirname, './images/descriptors');
 
@@ -54,6 +54,18 @@ app.post('/attendance',(req,res,next)=>{
 		return res.json({
 			result:'error',
 			message:'lack of data'
+		});
+	}
+
+	if(lectureId.length == 26){
+		lectureId = lectureId.substring(1, 25);
+		console.log(lectureId);
+	}
+
+	if(lectureId.length != 24){
+		return res.json({
+			status:'error',
+			message:'invalid lectureId: '+lectureId
 		});
 	}
 
@@ -110,7 +122,7 @@ app.post('/attendance',(req,res,next)=>{
 		// doing attendance (after sending response)
 		let attendedStudents=students.map((s, i)=>s._id);
 		let lecture = await db.collection('lectures').findOneAndUpdate(
-			{_id: ObjectId(data.lectureId)}, 
+			{_id: ObjectId(data.lectureId).str}, 
 			{
 				$addToSet : {
 					attendedStudents: { $each: attendedStudents }
