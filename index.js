@@ -90,7 +90,9 @@ app.post('/attendance',(req,res,next)=>{
 			attendance({
 				faces:result.facesData,
 				imageBuffer: result.boxedImageBuffer,
-				lectureId
+				lectureId,
+				width: result.width,
+				height: result.height
 			});
 		});
 	});
@@ -120,7 +122,9 @@ app.post('/attendance',(req,res,next)=>{
 			return res.json({
 				status:'error',
 				message:'no students found',
-				photo: data.imageBuffer
+				photo: data.imageBuffer,
+				width: data.width,
+				height: data.height
 			});
 		}
 
@@ -143,7 +147,9 @@ app.post('/attendance',(req,res,next)=>{
 				status:'error',
 				message: 'lecture was not updated. Lecture was not found for given id, or other error occured on updating',
 				students,
-				photo: data.imageBuffer
+				photo: data.imageBuffer,
+				width: data.width,
+				height: data.height
 			});
 		}
 
@@ -153,6 +159,8 @@ app.post('/attendance',(req,res,next)=>{
 			message:'',
 			students,
 			photo: data.imageBuffer,
+			width: data.width,
+			height: data.height
 		});
 	}
 });

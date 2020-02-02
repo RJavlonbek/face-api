@@ -254,6 +254,7 @@ async function recognizeFaces(photo, studentIds){
     // getting queried photo informations
     let img = new Image;
     img.src=photo.data;
+
     const queryResults = await faceapi.detectAllFaces(img, faceDetectionOptions)
         .withFaceLandmarks()
         .withFaceDescriptors();
@@ -301,7 +302,9 @@ async function recognizeFaces(photo, studentIds){
 
     return {
         facesData:results,
-        boxedImageBuffer:imageBuffer
+        boxedImageBuffer:imageBuffer,
+        width: queryCanvas.width,
+        height: queryCanvas.height
     };
 }
 
