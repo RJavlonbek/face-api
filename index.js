@@ -78,7 +78,7 @@ app.post('/attendance',(req,res,next)=>{
 
 		faceApi.recognizeFaces(photo, studentIds).catch((err)=>{
 			console.log('error occured while recognizing faces: '+err);
-			res.json({
+			return res.json({
 				result:'error',
 				message:'error occured while recognizing faces: '+err
 			});
@@ -105,11 +105,16 @@ app.post('/attendance',(req,res,next)=>{
 
 		let students = await db.collection('students').find({
 			studentId:{$in:studentIds}
-		}, {
-			studentId: 1,
-			firstname: 1,
-			lastname: 1
 		}).toArray();
+
+		students=students.map((s, i)=>{
+			return {
+				_id: s._id,
+				firstname: s.firstname,
+				lastname: s.lastname,
+				studentId: s.studentId
+			}
+		});
 
 		if(!(students && students.length)){
 			return res.json({
@@ -122,7 +127,7 @@ app.post('/attendance',(req,res,next)=>{
 		// doing attendance (after sending response)
 		let attendedStudents=students.map((s, i)=>s._id);
 		let lecture = await db.collection('lectures').findOneAndUpdate(
-			{_id: ObjectId(data.lectureId).str}, 
+			{_id: ObjectId(data.lectureId)}, 
 			{
 				$addToSet : {
 					attendedStudents: { $each: attendedStudents }
@@ -131,10 +136,12 @@ app.post('/attendance',(req,res,next)=>{
 			{returnNewDocument: true}
 		);
 
+		//return res.json(lecture);
+
 		if(!(lecture.value && lecture.value._id)){
 			return res.json({
 				status:'error',
-				message: 'lecture did not updated. Lecture was not found for given id, or other error occured on updating',
+				message: 'lecture was not updated. Lecture was not found for given id, or other error occured on updating',
 				students,
 				photo: data.imageBuffer
 			});
@@ -146,7 +153,6 @@ app.post('/attendance',(req,res,next)=>{
 			message:'',
 			students,
 			photo: data.imageBuffer,
-
 		});
 	}
 });
