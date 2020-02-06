@@ -47,6 +47,7 @@ app.post('/attendance',(req,res,next)=>{
 	req.setTimeout(600000);
 	var photo=req.files.photo;
 	var {lectureId}=req.body || {};
+	const {onlyImg}=req.body;
 	var studentIds=['u1710005','u1710020','u1710032','u1710033','u1710037','u1710042','u1710046','u1710048','u1710056','u1710100','u1710113','u1710135','u1710146'];
 	const DESCRIPTORS_DIR=path.join(__dirname, './images/descriptors');
 
@@ -85,11 +86,15 @@ app.post('/attendance',(req,res,next)=>{
 		}).then((result)=>{
 			console.log('recognizing faces done, image was sent...');
 
+			if(onlyImg){
+				res.set('Content-Type','image/jpeg');
+				return res.send(result.boxedImageBuffer);
+			}
+
 			// sending request to iut-attendance API in order to mark found students attended
 			// i am changing this, because now I am connecting iut-attendance application's database
 			attendance({
 				faces:result.facesData,
-				imageBuffer: result.boxedImageBuffer,
 				lectureId,
 				width: result.width,
 				height: result.height
@@ -122,7 +127,6 @@ app.post('/attendance',(req,res,next)=>{
 			return res.json({
 				status:'error',
 				message:'no students found',
-				photo: data.imageBuffer,
 				width: data.width,
 				height: data.height
 			});
@@ -147,7 +151,6 @@ app.post('/attendance',(req,res,next)=>{
 				status:'error',
 				message: 'lecture was not updated. Lecture was not found for given id, or other error occured on updating',
 				students,
-				photo: data.imageBuffer,
 				width: data.width,
 				height: data.height
 			});
@@ -181,7 +184,6 @@ app.post('/attendance',(req,res,next)=>{
 			status: 'success',
 			message:'',
 			students,
-			photo: data.imageBuffer,
 			width: data.width,
 			height: data.height
 		});
