@@ -18,6 +18,7 @@
     "face-api.js": "^0.22.0",
     "fs": "0.0.1-security",
     "mongodb": "^3.5.2",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "seedrandom": "^2.4.4"
   }
 }
